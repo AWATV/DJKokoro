@@ -1,0 +1,28 @@
+{
+  "name": "djkokoro",
+  "version": "1.0.0",
+  "description": "Bot",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon discordBotV2.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AWATV/DJKokoro.git"
+  },
+  "author": "AWA",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AWATV/DJKokoro/issues"
+  },
+  "homepage": "https://github.com/AWATV/DJKokoro#readme",
+  "dependencies": {
+    "axios": "^1.6.8",
+    "body-parser": "^1.20.2",
+    "discord-interactions": "^3.4.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.3",
+    "nodemon": "^3.1.0"
+  }
+}
