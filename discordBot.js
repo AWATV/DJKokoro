@@ -2,6 +2,11 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 
+require('dotenv').config()
+const APPLICATION_ID = process.env.APPLICATION_ID 
+const PUBLIC_KEY = process.env.PUBLIC_KEY || 'not set'
+const GUILD_ID = process.env.GUILD_ID 
+
 function configureDiscordBot(token) {
   const commands = [
     {
@@ -16,6 +21,7 @@ function configureDiscordBot(token) {
       GatewayIntentBits.MessageContent,
       GatewayIntentBits.GuildMembers,
       GatewayIntentBits.DirectMessages,
+      GatewayIntentBits.GuildVoiceStates,
     ],
   });
 
@@ -29,7 +35,7 @@ function configureDiscordBot(token) {
             console.log('Started refreshing application (/) commands.');
 
             await rest.put(
-                Routes.applicationGuildCommands('724166846470815807', '1195451831149658225'),
+                Routes.applicationGuildCommands(APPLICATION_ID, GUILD_ID),
                 { body: commands },
             );
 
@@ -40,7 +46,6 @@ function configureDiscordBot(token) {
     })();
   });
 
-  // Добавление слеш-команды в Discord
   discordClient.on('interactionCreate', async (interaction) => {
     if (!interaction.isCommand()) return;
 
@@ -70,10 +75,6 @@ function configureDiscordBot(token) {
       await interaction.reply({ embeds: [embed], components: [row] });
     }
   });
-
-  //discordClient.on('messageCreate', async (message) => {
-  //  //moved to server.js
-  //});
   return discordClient;
 }
 
