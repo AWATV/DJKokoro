@@ -171,7 +171,24 @@ discordClient.on('interactionCreate', async interaction => {
                                 placeholder: `Приватний канал для ${interaction.user.tag}`,
                                 value: interaction.channel.name,
                                 style: 1,
-                                required: false
+                                required: false,
+                                max_length: 100,
+                                min_length: 1,
+                            }
+                        ]
+                    },{
+                        type: 1,
+                        components: [
+                            {
+                                type: 4,
+                                custom_id: 'limit',
+                                label: 'limit',
+                                placeholder: `0 - 99`,
+                                value: interaction.channel.userLimit,
+                                style: 1,
+                                required: false,
+                                max_length: 2,
+                                min_length: 1,
                             },
                         ]
                     }
@@ -179,13 +196,32 @@ discordClient.on('interactionCreate', async interaction => {
             });
         }
     }
-    if (interaction.type == 5) { //modal
+    if (interaction.type == 5) { // modal
         if (interaction.customId === 'edit') {
-            console.log(interaction.components[0].components[0].value)
-            interaction.channel.setName(interaction.components[0].components[0].value);
-        }
-        interaction.reply({ embeds: [{ title: '✏️ Канал змінено успішно!', fields: [{ name: 'Назва каналу', value: `\`${interaction.channel.name}\` ≫ \`${interaction.components[0].components[0].value}\``
-    }], color: 0x00ff00}], ephemeral: true });
-    }
-});
+            console.log(interaction.components)
+            const oldName = interaction.channel.name;
+            const oldLimit = interaction.channel.userLimit;
+            let newName, newLimit;
+    
+            if (interaction.components[0].components[0].value == '') {
+                newName = `Приватний канал для ${interaction.user.tag}`;
+            } else {
+                newName = interaction.components[0].components[0].value;
+            }
 
+            if (interaction.components[1].components[0].value == '' || !parseInt(interaction.components[1].components[0].value)) {
+                newLimit = oldLimit;
+            } else {
+                newLimit = interaction.components[1].components[0].value;
+            }
+
+            interaction.channel.setName(newName);
+            interaction.channel.setUserLimit(interaction.components[1].components[0].value);
+
+            interaction.reply({ embeds: [{ title: '✏️ Канал змінено успішно!', fields: [
+                { name: 'Назва каналу', value: `\`${oldName}\` ≫ \`${newName}\`` },
+                { name: 'Ліміт каналу', value: `\`${oldLimit}\` ≫ \`${newLimit}\`` },
+            ], color: 0x00ff00 }], ephemeral: true });
+        }
+    }    
+});
