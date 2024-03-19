@@ -2,10 +2,10 @@ const configureDiscordBot = require('./discordBot');
 const startWebServer = require('./webServer');
 require('dotenv').config()
 
-const TOKEN = process.env.TOKEN 
+const TOKEN = process.env.TOKEN
 
 const discordClient = configureDiscordBot(TOKEN);
-discordClient.login(TOKEN).then(() => {console.log('Discord бот запущен');});
+discordClient.login(TOKEN).then(() => { console.log('Discord бот запущен'); });
 const WebClient = startWebServer();
 
 discordClient.on('voiceStateUpdate', async (oldState, newState) => {
@@ -28,128 +28,155 @@ discordClient.on('voiceStateUpdate', async (oldState, newState) => {
             name: `Приватний канал для ${user.tag}`
         })
         member.voice.setChannel(channel);
-        channel.send({embeds: [
-            {
-                color: 0x0099ff,
-                title: `Вітаємо ${user.tag}!`,
-                description: 'Ось твої налаштування!'
-            }
-        ],
-        components: [
-            {
-                type: 1,
-                components: [
-                    {
-                        type: 2,
-                        style: 2,
-                        label: 'Назвати',
-                        custom_id: 'edit',
-                        emoji: '✏️'
-                    },
-                    {
-                        type: 2,
-                        style: 2,
-                        label: 'Доступ',
-                        custom_id: 'access',
-                        emoji: '👥'
-                    },
-                    {
-                        type: 2,
-                        style: 2,
-                        label: 'Кік',
-                        custom_id: 'kick',
-                        emoji: '👟'
-                    }
-                ]
-            },{
-                type: 1,
-                components: [
-                    {
-                        type: 2,
-                        style: 2,
-                        label: 'Всі',
-                        custom_id: 'public',
-                        emoji: '🌐'
-                    },
-                    {
-                        type: 2,
-                        style: 2,
-                        label: 'Приват',
-                        custom_id: 'private',
-                        emoji: '🚫'
-                    },
-                    {
-                        type: 2,
-                        style: 2,
-                        label: 'Сховати',
-                        custom_id: 'hide',
-                        emoji: '🙈'
-                    }
-                ]
-            },{
-                type: 1,
-                components: [
-                    {
-                        type: 2,
-                        style: 3,
-                        label: 'Передати',
-                        custom_id: 'gift',
-                        emoji: '🎁'
-                    },
-                    {
-                        type: 2,
-                        style: 1,
-                        label: 'Привласнити',
-                        custom_id: 'claim',
-                        emoji: '👑'
-                    }
-                ]
-            },{
-                type: 1,
-                components: [
-                    // StringSelectComponent
-                    {
-                        type: 3,
-                        placeholder: '🌟 Супер кнопки',
-                        custom_id: 'select',
-                        options: [
-                            {
-                                label: 'Зберегти',
-                                value: 'presetadd',
-                                description: 'пресет каналу',
-                                emoji: '💾'
-                            },
-                            {
-                                label: 'Завантажити',
-                                value: 'presetset',
-                                description: 'пресет',
-                                emoji: '📂'
-                            },
-                            {
-                                label: 'Скинути',
-                                value: 'reset',
-                                description: 'канал',
-                                emoji: '🔄'
-                            },
-                            {
-                                label: 'Підняти',
-                                value: 'push',
-                                description: 'канал угору',
-                                emoji: '🚀'
-                            },
-                            {
-                                label: 'Очистити',
-                                value: 'clean',
-                                description: 'всі повідомлення',
-                                emoji: '🧹'
-                            },
-                        ]
-                    }
-                ]
-            }]
+        channel.send({
+            content: `<@${user.id}>`,
+            embeds: [
+                {
+                    color: 0x0099ff,
+                    title: `Вітаємо ${user.tag}!`,
+                    description: 'Налаштуйте свій канал так, як вам подобається.',
+                    fields: [
+                        {
+                            name: '• Власник каналу',
+                            value: `<@${user.id}>`,
+                        },
+                        {
+                            name: '• Назва каналу',
+                            value: `Приватний канал для ${user.tag}`,
+                        },
+                        {
+                            name: '• Ліміт',
+                            value: '...',
+                            inline: true
+                        },
+                        {
+                            name: '• Регіон',
+                            value: '...',
+                            inline: true
+                        },
+                        {
+                            name: '• Доступ',
+                            value: '...',
+                            inline: true
+                        }
+                    ]
+                }
+            ],
+            components: [
+                {
+                    type: 1,
+                    components: [
+                        {
+                            type: 2,
+                            style: 2,
+                            label: 'Назвати',
+                            custom_id: 'edit',
+                            emoji: '✏️'
+                        },
+                        {
+                            type: 2,
+                            style: 2,
+                            label: 'Доступ',
+                            custom_id: 'access',
+                            emoji: '👥'
+                        },
+                        {
+                            type: 2,
+                            style: 2,
+                            label: 'Кік',
+                            custom_id: 'kick',
+                            emoji: '👟'
+                        }
+                    ]
+                }, {
+                    type: 1,
+                    components: [
+                        {
+                            type: 2,
+                            style: 2,
+                            label: 'Всі',
+                            custom_id: 'public',
+                            emoji: '🌐'
+                        },
+                        {
+                            type: 2,
+                            style: 2,
+                            label: 'Приват',
+                            custom_id: 'private',
+                            emoji: '🚫'
+                        },
+                        {
+                            type: 2,
+                            style: 2,
+                            label: 'Сховати',
+                            custom_id: 'hide',
+                            emoji: '🙈'
+                        }
+                    ]
+                }, {
+                    type: 1,
+                    components: [
+                        {
+                            type: 2,
+                            style: 3,
+                            label: 'Передати',
+                            custom_id: 'gift',
+                            emoji: '🎁'
+                        },
+                        {
+                            type: 2,
+                            style: 1,
+                            label: 'Привласнити',
+                            custom_id: 'claim',
+                            emoji: '👑'
+                        }
+                    ]
+                }, {
+                    type: 1,
+                    components: [
+                        // StringSelectComponent
+                        {
+                            type: 3,
+                            placeholder: '🌟 Супер кнопки',
+                            custom_id: 'select',
+                            options: [
+                                {
+                                    label: 'Зберегти',
+                                    value: 'presetadd',
+                                    description: 'пресет каналу',
+                                    emoji: '💾'
+                                },
+                                {
+                                    label: 'Завантажити',
+                                    value: 'presetset',
+                                    description: 'пресет',
+                                    emoji: '📂'
+                                },
+                                {
+                                    label: 'Скинути',
+                                    value: 'reset',
+                                    description: 'канал',
+                                    emoji: '🔄'
+                                },
+                                {
+                                    label: 'Підняти',
+                                    value: 'push',
+                                    description: 'канал угору',
+                                    emoji: '🚀'
+                                },
+                                {
+                                    label: 'Очистити',
+                                    value: 'clean',
+                                    description: 'всі повідомлення',
+                                    emoji: '🧹'
+                                },
+                            ]
+                        }
+                    ]
+                }]
         });
     }
-    
+
     if (oldState.channel && oldState.channel.id !== '1218952948294352916' && oldState.channel.parent.id === '1218952592646996069' && oldState.channel.members.size == 0) {
         return oldState.channel.delete();
     }
@@ -176,7 +203,7 @@ discordClient.on('interactionCreate', async interaction => {
                                 min_length: 1,
                             }
                         ]
-                    },{
+                    }, {
                         type: 1,
                         components: [
                             {
@@ -195,6 +222,287 @@ discordClient.on('interactionCreate', async interaction => {
                 ]
             });
         }
+        if (interaction.customId === 'access') {
+            await interaction.reply({
+                embeds: [
+                    {
+                        title: '👥 Керуйте доступом користувачів та ролей до Вашого динамічного каналу',
+                        color: 0x0099ff,
+                        fields: [
+                            {
+                                name: 'Дозволений список:',
+                                value: '...',
+                            },
+                            {
+                                name: 'Список заборонених:',
+                                value: '...',
+                            }
+                        ]
+
+                    }
+                ],
+                components: [
+                    {
+                        type: 1,
+                        components: [
+                            {
+                                type: 7,
+                                custom_id: 'access-add',
+                                min_values: 1,
+                                max_values: 25,
+                                placeholder: '👆 ...',
+                            }
+                        ]
+                    }, {
+                        type: 1,
+                        components: [
+                            {
+                                type: 7,
+                                custom_id: 'access-ban',
+                                min_values: 1,
+                                max_values: 25,
+                                placeholder: '👊 ...',
+                            }
+                        ]
+                    }, {
+                        type: 1,
+                        components: [
+                            {
+                                type: 7,
+                                custom_id: 'access-unban',
+                                min_values: 1,
+                                max_values: 25,
+                                placeholder: '👇 ...',
+                            }
+                        ]
+                    }
+                ],
+                ephemeral: true
+            });
+        }
+        if (interaction.customId === 'kick') {
+            await interaction.reply({
+                embeds: [
+                    {
+                        title: '👟 Кікайте учасника зі свого каналу',
+                        description: 'Кого б ви хотіли вигнати зі свого каналу?',
+                        color: 0xff0000
+                    }
+                ],
+                components: [
+                    {
+                        type: 1,
+                        components: [
+                            {
+                                type: 5,
+                                custom_id: 'just-kick',
+                                min_values: 1,
+                                max_values: 25,
+                                placeholder: '...',
+                            }
+                        ]
+                    }
+                ],
+                ephemeral: true
+            });
+        };
+        if (interaction.customId === 'public') {
+            // make magic change
+            // make magic color
+            // make magic deactivation
+            interaction.reply({
+                embeds: [
+                    {
+                        title: '🌐 Тепер ваш канал є загальнодоступним!',
+                        fields: [
+                            {
+                                name: 'Список заборонених:',
+                                value: '...',
+                            }
+                        ],
+                        footer: {
+                            text: 'Хто не повинен мати доступу до каналу?',
+                        },
+                        color: 0x0099ff
+                    }
+                ],
+                components: [
+                    {
+                        type: 1,
+                        components: [
+                            {
+                                type: 7,
+                                custom_id: 'access-ban',
+                                min_values: 1,
+                                max_values: 25,
+                                placeholder: '👊 ...',
+                            }
+                        ]
+                    }, {
+                        type: 1,
+                        components: [
+                            {
+                                type: 7,
+                                custom_id: 'access-unban',
+                                min_values: 1,
+                                max_values: 25,
+                                placeholder: '👇 ...',
+                            }
+                        ]
+                    }
+                ],
+                ephemeral: true
+            })
+
+        }
+        if (interaction.customId === 'private') {
+            // make magic change
+            // make magic color
+            // make magic deactivation
+            interaction.reply({
+                embeds: [
+                    {
+                        title: '🚫 Тепер ваш канал є приватним!',
+                        fields: [
+                            {
+                                name: 'Список заборонених:',
+                                value: '...',
+                            }
+                        ],
+                        footer: {
+                            text: 'Хто повинен мати доступу до каналу?',
+                        },
+                        color: 0xff0000
+                    }
+                ],
+                components: [
+                    {
+                        type: 1,
+                        components: [
+                            {
+                                type: 7,
+                                custom_id: 'access-add',
+                                min_values: 1,
+                                max_values: 25,
+                                placeholder: '👆 ...',
+                            }
+                        ]
+                    }, {
+                        type: 1,
+                        components: [
+                            {
+                                type: 7,
+                                custom_id: 'access-unban',
+                                min_values: 1,
+                                max_values: 25,
+                                placeholder: '👇 ...',
+                            }
+                        ]
+                    }
+                ], ephemeral: true
+            })
+        };
+        if (interaction.customId === 'hide') {
+            // make magic change
+            // make magic color
+            // make magic deactivation
+            interaction.reply({
+                embeds: [
+                    {
+                        title: '🙈 Ваш канал тепер прихований!',
+                        color: 0xff9900,
+                        fields: [
+                            {
+                                name: 'Дозволений список:',
+                                value: '...',
+                            }
+                        ],
+                        footer: {
+                            text: 'Ваш канал тепер невидимий.\nХто повинен мати доступ до вашого каналу?',
+                        }
+                    }
+                ],
+                components: [{
+                    type: 1,
+                    components: [
+                        {
+                            type: 7,
+                            custom_id: 'access-add',
+                            min_values: 1,
+                            max_values: 25,
+                            placeholder: '👆 ...',
+                        }
+                    ]
+                }, {
+                    type: 1,
+                    components: [
+                        {
+                            type: 7,
+                            custom_id: 'access-unban',
+                            min_values: 1,
+                            max_values: 25,
+                            placeholder: '👇 ...',
+                        }
+                    ]
+                }],
+                ephemeral: true
+            })
+        };
+        if (interaction.customId === 'gift') {
+            // make magic change
+            // make magic color
+            interaction.reply({
+                embeds: [
+                    {
+                        title: '🎁 Передача каналу',
+                        color: 0x00ff00,
+                    }
+                ],
+                components: [{
+                    type: 1,
+                    components: [
+                        {
+                            type: 5,
+                            custom_id: 'chose-gift',
+                            min_values: 1,
+                            max_values: 1,
+                            placeholder: '🎁 ...',
+                        }
+                    ]
+                }],
+                ephemeral: true
+            })
+        };
+        if (interaction.customId === 'claim') {
+            // make magic change
+            // make magic color
+            interaction.reply({
+                embeds: [
+                    {
+                        title: '👑 Привласнити канал?',
+                        color: 0x00ff00,
+                    }
+                ],
+                components: [{
+                    type: 1,
+                    components: [
+                        {
+                            type: 2,
+                            style: 3,
+                            custom_id: 'just-claim',
+                            label: 'Підтвердити',
+                        },
+                        {
+                            type: 2,
+                            style: 4,
+                            custom_id: 'cancel',
+                            label: 'Скасувати',
+                        }
+                    ]
+                }],
+                ephemeral: true
+            })
+        }
     }
     if (interaction.type == 5) { // modal
         if (interaction.customId === 'edit') {
@@ -202,7 +510,7 @@ discordClient.on('interactionCreate', async interaction => {
             const oldName = interaction.channel.name;
             const oldLimit = interaction.channel.userLimit;
             let newName, newLimit;
-    
+
             if (interaction.components[0].components[0].value == '') {
                 newName = `Приватний канал для ${interaction.user.tag}`;
             } else {
@@ -218,10 +526,14 @@ discordClient.on('interactionCreate', async interaction => {
             interaction.channel.setName(newName);
             interaction.channel.setUserLimit(interaction.components[1].components[0].value);
 
-            interaction.reply({ embeds: [{ title: '✏️ Канал змінено успішно!', fields: [
-                { name: 'Назва каналу', value: `\`${oldName}\` ≫ \`${newName}\`` },
-                { name: 'Ліміт каналу', value: `\`${oldLimit}\` ≫ \`${newLimit}\`` },
-            ], color: 0x00ff00 }], ephemeral: true });
+            interaction.reply({
+                embeds: [{
+                    title: '✏️ Канал змінено успішно!', fields: [
+                        { name: 'Назва каналу', value: `\`${oldName}\` ≫ \`${newName}\`` },
+                        { name: 'Ліміт каналу', value: `\`${oldLimit}\` ≫ \`${newLimit}\`` },
+                    ], color: 0x00ff00
+                }], ephemeral: true
+            });
         }
-    }    
+    }
 });
