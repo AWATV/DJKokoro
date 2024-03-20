@@ -231,11 +231,11 @@ discordClient.on('interactionCreate', async interaction => {
                         fields: [
                             {
                                 name: 'Дозволений список:',
-                                value: '...',
+                                value: `${(await getChannelAllowList(interaction.channel)).toString()}`,
                             },
                             {
                                 name: 'Список заборонених:',
-                                value: '...',
+                                value: `${(await getChannelDenyList(interaction.channel)).toString()}`,
                             }
                         ]
 
@@ -310,6 +310,7 @@ discordClient.on('interactionCreate', async interaction => {
             // make magic change
             // make magic color
             // make magic deactivation
+            showChannel(interaction.channel);
             interaction.reply({
                 embeds: [
                     {
@@ -406,6 +407,7 @@ discordClient.on('interactionCreate', async interaction => {
             // make magic change
             // make magic color
             // make magic deactivation
+            hideChannel(interaction.channel)
             interaction.reply({
                 embeds: [
                     {
@@ -537,3 +539,58 @@ discordClient.on('interactionCreate', async interaction => {
         }
     }
 });
+
+
+async function getChannelAllowList(channel) {
+    // Fetch permission overwrites for the channel
+    const permissionOverwrites = await channel.permissionOverwrites.cache;
+    const list = []
+    permissionOverwrites.forEach(permissionOverwrite => {
+        if (permissionOverwrite.allow.toArray().includes('Connect')) {
+            if (permissionOverwrite.type === 0) {
+                list.push(`<@&${permissionOverwrite.id}>`)
+            }
+            if (permissionOverwrite.type === 1) {
+                list.push(`<@${permissionOverwrite.id}>`)
+            }
+        }
+    });
+    return list
+}
+
+async function getChannelDenyList(channel) {
+    // Fetch permission overwrites for the channel
+    const permissionOverwrites = await channel.permissionOverwrites.cache;
+    const list = []
+    permissionOverwrites.forEach(permissionOverwrite => {
+        console.log(permissionOverwrite)
+        console.log(permissionOverwrite.deny.toArray())
+        if (permissionOverwrite.deny.toArray().includes('Connect')) {
+            if (permissionOverwrite.type === 0) {
+                list.push(`<@&${permissionOverwrite.id}>`)
+            }
+            if (permissionOverwrite.type === 1) {
+                list.push(`<@${permissionOverwrite.id}>`)
+            }
+        }
+    });
+    return list
+}
+
+async function hideChannel(channel) {
+    // Set permission to everyone to not see the channel
+    const everyone = await channel.guild.roles.everyone;
+    await channel.permissionOverwrites.create(everyone, {
+        ViewChannel: false
+    })
+    console.log('Hided channel ' + channel.name)
+}
+
+async function showChannel(channel) {
+    // Set permission to everyone to see the channel
+    const everyone = await channel.guild.roles.everyone;
+    await channel.permissionOverwrites.create(everyone, {
+        ViewChannel: true
+    })
+    console.log('Showed channel ' + channel.name)
+}
