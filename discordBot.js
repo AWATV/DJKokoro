@@ -2,6 +2,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 
+
 require('dotenv').config()
 const APPLICATION_ID = process.env.APPLICATION_ID 
 const PUBLIC_KEY = process.env.PUBLIC_KEY || 'not set'

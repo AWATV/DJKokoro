@@ -1,8 +1,11 @@
 const configureDiscordBot = require('./discordBot');
 const startWebServer = require('./webServer');
+const yaml = require('yaml');
+const fs = require('fs');
 require('dotenv').config()
 
 const TOKEN = process.env.TOKEN
+const messages = yaml.parse(fs.readFileSync('messages.yml', 'utf8'));
 
 const discordClient = configureDiscordBot(TOKEN);
 discordClient.login(TOKEN).then(() => { console.log('Discord бот запущен'); });
@@ -25,156 +28,10 @@ discordClient.on('voiceStateUpdate', async (oldState, newState) => {
         const channel = await newState.guild.channels.create({
             type: 2,
             parent: newState.channel.parent,
-            name: `Приватний канал для ${user.tag}`
+            name: messages.baseChannelName.replace('{userTag}', user.tag)
         })
         member.voice.setChannel(channel);
-        channel.send({
-            content: `<@${user.id}>`,
-            embeds: [
-                {
-                    color: 0x0099ff,
-                    title: `Вітаємо ${user.tag}!`,
-                    description: 'Налаштуйте свій канал так, як вам подобається.',
-                    fields: [
-                        {
-                            name: '• Власник каналу',
-                            value: `<@${user.id}>`,
-                        },
-                        {
-                            name: '• Назва каналу',
-                            value: `Приватний канал для ${user.tag}`,
-                        },
-                        {
-                            name: '• Ліміт',
-                            value: '...',
-                            inline: true
-                        },
-                        {
-                            name: '• Регіон',
-                            value: '...',
-                            inline: true
-                        },
-                        {
-                            name: '• Доступ',
-                            value: '...',
-                            inline: true
-                        }
-                    ]
-                }
-            ],
-            components: [
-                {
-                    type: 1,
-                    components: [
-                        {
-                            type: 2,
-                            style: 2,
-                            label: 'Назвати',
-                            custom_id: 'edit',
-                            emoji: '✏️'
-                        },
-                        {
-                            type: 2,
-                            style: 2,
-                            label: 'Доступ',
-                            custom_id: 'access',
-                            emoji: '👥'
-                        },
-                        {
-                            type: 2,
-                            style: 2,
-                            label: 'Кік',
-                            custom_id: 'kick',
-                            emoji: '👟'
-                        }
-                    ]
-                }, {
-                    type: 1,
-                    components: [
-                        {
-                            type: 2,
-                            style: 2,
-                            label: 'Всі',
-                            custom_id: 'public',
-                            emoji: '🌐'
-                        },
-                        {
-                            type: 2,
-                            style: 2,
-                            label: 'Приват',
-                            custom_id: 'private',
-                            emoji: '🚫'
-                        },
-                        {
-                            type: 2,
-                            style: 2,
-                            label: 'Сховати',
-                            custom_id: 'hide',
-                            emoji: '🙈'
-                        }
-                    ]
-                }, {
-                    type: 1,
-                    components: [
-                        {
-                            type: 2,
-                            style: 3,
-                            label: 'Передати',
-                            custom_id: 'gift',
-                            emoji: '🎁'
-                        },
-                        {
-                            type: 2,
-                            style: 1,
-                            label: 'Привласнити',
-                            custom_id: 'claim',
-                            emoji: '👑'
-                        }
-                    ]
-                }, {
-                    type: 1,
-                    components: [
-                        // StringSelectComponent
-                        {
-                            type: 3,
-                            placeholder: '🌟 Супер кнопки',
-                            custom_id: 'select',
-                            options: [
-                                {
-                                    label: 'Зберегти',
-                                    value: 'presetadd',
-                                    description: 'пресет каналу',
-                                    emoji: '💾'
-                                },
-                                {
-                                    label: 'Завантажити',
-                                    value: 'presetset',
-                                    description: 'пресет',
-                                    emoji: '📂'
-                                },
-                                {
-                                    label: 'Скинути',
-                                    value: 'reset',
-                                    description: 'канал',
-                                    emoji: '🔄'
-                                },
-                                {
-                                    label: 'Підняти',
-                                    value: 'push',
-                                    description: 'канал угору',
-                                    emoji: '🚀'
-                                },
-                                {
-                                    label: 'Очистити',
-                                    value: 'clean',
-                                    description: 'всі повідомлення',
-                                    emoji: '🧹'
-                                },
-                            ]
-                        }
-                    ]
-                }]
-        });
+        channel.send(await makeBaseMessage(messages.colorPrimary, user, channel));
     }
 
     if (oldState.channel && oldState.channel.id !== '1218952948294352916' && oldState.channel.parent.id === '1218952592646996069' && oldState.channel.members.size == 0) {
@@ -230,11 +87,11 @@ discordClient.on('interactionCreate', async interaction => {
                         color: 0x0099ff,
                         fields: [
                             {
-                                name: 'Дозволений список:',
+                                name: messages.accessList,
                                 value: `${(await getChannelAllowList(interaction.channel)).toString()}`,
                             },
                             {
-                                name: 'Список заборонених:',
+                                name: messages.denyList,
                                 value: `${(await getChannelDenyList(interaction.channel)).toString()}`,
                             }
                         ]
@@ -514,7 +371,7 @@ discordClient.on('interactionCreate', async interaction => {
             let newName, newLimit;
 
             if (interaction.components[0].components[0].value == '') {
-                newName = `Приватний канал для ${interaction.user.tag}`;
+                newName = messages.baseChannelName.replace('{userTag}', interaction.user.tag);
             } else {
                 newName = interaction.components[0].components[0].value;
             }
@@ -526,14 +383,14 @@ discordClient.on('interactionCreate', async interaction => {
             }
 
             interaction.channel.setName(newName);
-            interaction.channel.setUserLimit(interaction.components[1].components[0].value);
+            interaction.channel.setUserLimit(newLimit);
 
             interaction.reply({
                 embeds: [{
-                    title: '✏️ Канал змінено успішно!', fields: [
-                        { name: 'Назва каналу', value: `\`${oldName}\` ≫ \`${newName}\`` },
-                        { name: 'Ліміт каналу', value: `\`${oldLimit}\` ≫ \`${newLimit}\`` },
-                    ], color: 0x00ff00
+                    title: messages.notificationEditSuccess, fields: [
+                        { name: messages.name, value: `\`${oldName}\` ≫ \`${newName}\`` },
+                        { name: messages.limit, value: `\`${oldLimit}\` ≫ \`${newLimit}\`` },
+                    ], color: messages.colorSuccess
                 }], ephemeral: true
             });
         }
@@ -593,4 +450,166 @@ async function showChannel(channel) {
         ViewChannel: true
     })
     console.log('Showed channel ' + channel.name)
+}
+
+async function makeBaseMessage(color, user, channel) {
+    console.log(channel.rtcRegion)
+    return {
+        content: `<@${user.id}>`,
+        embeds: [
+            {
+                color: color,
+                title: messages.baseMessageWelcome.replace('{userTag}', user.tag),
+                description: messages.baseMessageDescription,
+                footer: {
+                    text: 'В розробці!',
+                },
+                fields: [
+                    {
+                        name: messages.owner,
+                        value: `<@${user.id}>`,
+                    },
+                    {
+                        name: messages.name,
+                        value: channel.name,
+                    },
+                    {
+                        name: messages.limit,
+                        value: channel.userLimit,
+                        inline: true
+                    },
+                    {
+                        name: messages.region,
+                        value: '...',
+                        inline: true
+                    },
+                    {
+                        name: messages.access,
+                        value: '...',
+                        inline: true
+                    }
+                ]
+            }
+        ],
+        components: [
+            {
+                type: 1,
+                components: [
+                    {
+                        type: 2,
+                        style: 2,
+                        label: messages.btnEdit,
+                        custom_id: 'edit',
+                        emoji: messages.btnEditEmoji
+                    },
+                    {
+                        type: 2,
+                        style: 2,
+                        label: messages.btnAccess,
+                        custom_id: 'access',
+                        emoji: messages.btnAccessEmoji,
+                        disabled : true
+                    },
+                    {
+                        type: 2,
+                        style: 2,
+                        label: messages.btnKick,
+                        custom_id: 'kick',
+                        emoji: messages.btnKickEmoji,
+                        disabled : true
+                    }
+                ]
+            }, {
+                type: 1,
+                components: [
+                    {
+                        type: 2,
+                        style: 2,
+                        label: messages.btnPublic,
+                        custom_id: 'public',
+                        emoji: messages.btnPublicEmoji,
+                        disabled : true
+                    },
+                    {
+                        type: 2,
+                        style: 2,
+                        label: messages.btnPrivate,
+                        custom_id: 'private',
+                        emoji: messages.btnPrivateEmoji,
+                        disabled : true
+                    },
+                    {
+                        type: 2,
+                        style: 2,
+                        label: messages.btnHide,
+                        custom_id: 'hide',
+                        emoji: messages.btnHideEmoji,
+                        disabled : true
+                    }
+                ]
+            }, {
+                type: 1,
+                components: [
+                    {
+                        type: 2,
+                        style: 3,
+                        label: messages.btnGift,
+                        custom_id: 'gift',
+                        emoji: messages.btnGiftEmoji,
+                        disabled : true
+                    },
+                    {
+                        type: 2,
+                        style: 1,
+                        label: messages.btnClaim,
+                        custom_id: 'claim',
+                        emoji: messages.btnClaimEmoji,
+                        disabled : true
+                    }
+                ]
+            }, {
+                type: 1,
+                components: [
+                    // StringSelectComponent
+                    {
+                        type: 3,
+                        placeholder: '🌟 Супер кнопки',
+                        custom_id: 'select',
+                        disabled : true,
+                        options: [
+                            {
+                                label: 'Зберегти',
+                                value: 'presetadd',
+                                description: 'пресет каналу',
+                                emoji: '💾'
+                            },
+                            {
+                                label: 'Завантажити',
+                                value: 'presetset',
+                                description: 'пресет',
+                                emoji: '📂'
+                            },
+                            {
+                                label: 'Скинути',
+                                value: 'reset',
+                                description: 'канал',
+                                emoji: '🔄'
+                            },
+                            {
+                                label: 'Підняти',
+                                value: 'push',
+                                description: 'канал угору',
+                                emoji: '🚀'
+                            },
+                            {
+                                label: 'Очистити',
+                                value: 'clean',
+                                description: 'всі повідомлення',
+                                emoji: '🧹'
+                            },
+                        ]
+                    }
+                ],
+            }]
+    }
 }

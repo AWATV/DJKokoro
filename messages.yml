@@ -1,0 +1,32 @@
+baseChannelName: "Приватний канал для {userTag}"
+baseMessageWelcome: "Вітаємо {userTag}!"
+baseMessageDescription: "Налаштуйте свій канал так, як вам подобається."
+colorPrimary: 0x0099ff
+colorSuccess: 0x00ff00
+colorInfo: 0x0099ff
+colorWarning: 0xff9900
+colorDanger: 0xff0000
+owner: "• Власник каналу"
+name: "• Назва каналу"
+limit: "• Ліміт"
+region: "• Регіон"
+access: "• Доступ"
+btnEdit: "Назвати"
+btnEditEmoji: "✏️"
+btnAccess: "Доступ"
+btnAccessEmoji: "👥"
+btnKick: "Кік"
+btnKickEmoji: "👟"
+btnPublic: "Всі"
+btnPublicEmoji: "🌐"
+btnPrivate: "Приват"
+btnPrivateEmoji: "🚫"
+btnHide: "Сховати"
+btnHideEmoji: "🙈"
+btnGift: "Передати"
+btnGiftEmoji: "🎁"
+btnClaim: "Привласнити"
+btnClaimEmoji: "👑"
+accessList: "Дозволений список:"
+denyList: "Список заборонених:"
+notificationEditSuccess: "✏️ Канал змінено успішно!"
