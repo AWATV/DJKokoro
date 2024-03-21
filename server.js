@@ -4,7 +4,7 @@ const yaml = require('yaml');
 const fs = require('fs');
 require('dotenv').config()
 
-const TOKEN ='MTIxMTMzOTIxMzg3NDY2MzQ4OQ.GuFbjC.WjGS9l8kuLn5GkhbVB9mfaXGKGl1tWJn7t7M88'
+const TOKEN = process.env.TOKEN
 const messages = yaml.parse(fs.readFileSync('messages.yml', 'utf8'));
 
 const discordClient = configureDiscordBot(TOKEN);
