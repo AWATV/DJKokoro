@@ -24,126 +24,76 @@ discordClient.on('voiceStateUpdate', async (oldState, newState) => {
         return;
     }
 
-    if (newState.channel && newState.channel.id === '1218952948294352916') {
+    if (newState.channel && newState.channel.id === process.env.CHANNEL_ID) {
         const channel = await newState.guild.channels.create({
             type: 2,
             parent: newState.channel.parent,
             name: messages.baseChannelName.replace('{userTag}', user.tag)
         })
         member.voice.setChannel(channel);
-        channel.send(await makeBaseMessage(messages.colorPrimary, user, channel));
+        baseMessage = await channel.send(await makeBaseMessage(messages.colorPrimary, user, channel, true, 1));
+        await baseMessage.edit(await makeBaseMessage(messages.colorPrimary, user, channel, false, 1));
     }
 
-    if (oldState.channel && oldState.channel.id !== '1218952948294352916' && oldState.channel.parent.id === '1218952592646996069' && oldState.channel.members.size == 0) {
+    if (oldState.channel && oldState.channel.id !== process.env.CHANNEL_ID && oldState.channel.parent.id === process.env.CATEGORY_ID && oldState.channel.members.size == 0) {
         return oldState.channel.delete();
     }
 });
 discordClient.on('interactionCreate', async interaction => {
     if (interaction.type == 3) { //button / filed
         if (interaction.customId === 'edit') {
-            await interaction.showModal({
-                title: 'Назвати канал',
-                custom_id: 'edit',
-                components: [
-                    {
-                        type: 1,
-                        components: [
-                            {
-                                type: 4,
-                                custom_id: 'name',
-                                label: 'Назва каналу',
-                                placeholder: `Приватний канал для ${interaction.user.tag}`,
-                                value: interaction.channel.name,
-                                style: 1,
-                                required: false,
-                                max_length: 100,
-                                min_length: 1,
-                            }
-                        ]
-                    }, {
-                        type: 1,
-                        components: [
-                            {
-                                type: 4,
-                                custom_id: 'limit',
-                                label: 'limit',
-                                placeholder: `0 - 99`,
-                                value: interaction.channel.userLimit,
-                                style: 1,
-                                required: false,
-                                max_length: 2,
-                                min_length: 1,
-                            },
-                        ]
-                    }
-                ]
-            });
+            if (await checkOwner(interaction)) {
+                await interaction.showModal({
+                    title: 'Назвати канал',
+                    custom_id: 'edit',
+                    components: [
+                        {
+                            type: 1,
+                            components: [
+                                {
+                                    type: 4,
+                                    custom_id: 'name',
+                                    label: 'Назва каналу',
+                                    placeholder: `Приватний канал для ${interaction.user.tag}`,
+                                    value: interaction.channel.name,
+                                    style: 1,
+                                    required: false,
+                                    max_length: 100,
+                                    min_length: 1,
+                                }
+                            ]
+                        }, {
+                            type: 1,
+                            components: [
+                                {
+                                    type: 4,
+                                    custom_id: 'limit',
+                                    label: 'limit',
+                                    placeholder: `0 - 99`,
+                                    value: interaction.channel.userLimit,
+                                    style: 1,
+                                    required: false,
+                                    max_length: 2,
+                                    min_length: 1,
+                                },
+                            ]
+                        }
+                    ]
+                });
+            }
         }
         if (interaction.customId === 'access') {
-            await interaction.reply({
-                embeds: [
-                    {
-                        title: '👥 Керуйте доступом користувачів та ролей до Вашого динамічного каналу',
-                        color: 0x0099ff,
-                        fields: [
-                            {
-                                name: messages.accessList,
-                                value: `${(await getChannelAllowList(interaction.channel)).toString()}`,
-                            },
-                            {
-                                name: messages.denyList,
-                                value: `${(await getChannelDenyList(interaction.channel)).toString()}`,
-                            }
-                        ]
-
-                    }
-                ],
-                components: [
-                    {
-                        type: 1,
-                        components: [
-                            {
-                                type: 7,
-                                custom_id: 'access-add',
-                                min_values: 1,
-                                max_values: 25,
-                                placeholder: '👆 ...',
-                            }
-                        ]
-                    }, {
-                        type: 1,
-                        components: [
-                            {
-                                type: 7,
-                                custom_id: 'access-ban',
-                                min_values: 1,
-                                max_values: 25,
-                                placeholder: '👊 ...',
-                            }
-                        ]
-                    }, {
-                        type: 1,
-                        components: [
-                            {
-                                type: 7,
-                                custom_id: 'access-unban',
-                                min_values: 1,
-                                max_values: 25,
-                                placeholder: '👇 ...',
-                            }
-                        ]
-                    }
-                ],
-                ephemeral: true
-            });
+            if (await checkOwner(interaction)) {
+                await interaction.reply(await makeAccessMessage(interaction.channel, true));
+            }
         }
         if (interaction.customId === 'kick') {
             await interaction.reply({
                 embeds: [
                     {
-                        title: '👟 Кікайте учасника зі свого каналу',
-                        description: 'Кого б ви хотіли вигнати зі свого каналу?',
-                        color: 0xff0000
+                        title: messages.kickMessage,
+                        description: messages.kickMessageDescription,
+                        color: messages.colorInfo
                     }
                 ],
                 components: [
@@ -155,7 +105,7 @@ discordClient.on('interactionCreate', async interaction => {
                                 custom_id: 'just-kick',
                                 min_values: 1,
                                 max_values: 25,
-                                placeholder: '...',
+                                placeholder: messages.btnKickKick,
                             }
                         ]
                     }
@@ -171,11 +121,11 @@ discordClient.on('interactionCreate', async interaction => {
             interaction.reply({
                 embeds: [
                     {
-                        title: '🌐 Тепер ваш канал є загальнодоступним!',
+                        title: messages.publicMessage,
                         fields: [
                             {
-                                name: 'Список заборонених:',
-                                value: '...',
+                                name: messages.denyList,
+                                value: getChannelDenyList(interaction.channel),
                             }
                         ],
                         footer: {
@@ -190,10 +140,10 @@ discordClient.on('interactionCreate', async interaction => {
                         components: [
                             {
                                 type: 7,
-                                custom_id: 'access-ban',
+                                custom_id: 'public-ban',
                                 min_values: 1,
                                 max_values: 25,
-                                placeholder: '👊 ...',
+                                placeholder: messages.btnAccessBan,
                             }
                         ]
                     }, {
@@ -201,7 +151,7 @@ discordClient.on('interactionCreate', async interaction => {
                         components: [
                             {
                                 type: 7,
-                                custom_id: 'access-unban',
+                                custom_id: 'public-reset',
                                 min_values: 1,
                                 max_values: 25,
                                 placeholder: '👇 ...',
@@ -250,7 +200,7 @@ discordClient.on('interactionCreate', async interaction => {
                         components: [
                             {
                                 type: 7,
-                                custom_id: 'access-unban',
+                                custom_id: 'access-reset',
                                 min_values: 1,
                                 max_values: 25,
                                 placeholder: '👇 ...',
@@ -297,7 +247,7 @@ discordClient.on('interactionCreate', async interaction => {
                     components: [
                         {
                             type: 7,
-                            custom_id: 'access-unban',
+                            custom_id: 'access-reset',
                             min_values: 1,
                             max_values: 25,
                             placeholder: '👇 ...',
@@ -362,10 +312,119 @@ discordClient.on('interactionCreate', async interaction => {
                 ephemeral: true
             })
         }
+        if (interaction.customId === 'access-add') {
+            // Arrays to store promises for users and roles permissions
+            const userPromises = [];
+            const rolePromises = [];
+        
+            // Handling permissions for users
+            interaction.users.forEach(user => {
+                userPromises.push(
+                    interaction.channel.permissionOverwrites.create(user, {
+                        ViewChannel: true,
+                        Connect: true
+                    })
+                );
+            });
+        
+            // Handling permissions for roles
+            interaction.roles.forEach(role => {
+                rolePromises.push(
+                    interaction.channel.permissionOverwrites.create(role, {
+                        ViewChannel: true,
+                        Connect: true
+                    })
+                );
+            });
+        
+            // Waiting for all permissions to be set
+            Promise.all([...userPromises, ...rolePromises])
+                .then(async () => {
+                    // After all permissions are set, update the interaction
+                    await interaction.update(await makeAccessMessage(interaction.channel, true));
+                })
+                .catch(error => {
+                    // Handle errors if any
+                    console.error('Error occurred:', error);
+                });
+        }
+        if (interaction.customId === 'access-ban') {
+            // Arrays to store promises for users and roles permissions
+            const userPromises = [];
+            const rolePromises = [];
+        
+            // Handling permissions for users
+            interaction.users.forEach(user => {
+                userPromises.push(
+                    interaction.channel.permissionOverwrites.create(user, {
+                        ViewChannel: false,
+                        Connect: false
+                    })
+                );
+            });
+        
+            // Handling permissions for roles
+            interaction.roles.forEach(role => {
+                rolePromises.push(
+                    interaction.channel.permissionOverwrites.create(role, {
+                        ViewChannel: false,
+                        Connect: false
+                    })
+                );
+            });
+        
+            // Waiting for all permissions to be set
+            Promise.all([...userPromises, ...rolePromises])
+                .then(async () => {
+                    // After all permissions are set, update the interaction
+                    await interaction.update(await makeAccessMessage(interaction.channel, true));
+                })
+                .catch(error => {
+                    // Handle errors if any
+                    console.error('Error occurred:', error);
+                });
+        }
+        if (interaction.customId === 'access-reset') {
+            // Arrays to store promises for users and roles permissions
+            const userPromises = [];
+            const rolePromises = [];
+        
+            // Handling permissions for users
+            interaction.users.forEach(user => {
+                userPromises.push(
+                    interaction.channel.permissionOverwrites.delete(user, {})
+                );
+            });
+        
+            // Handling permissions for roles
+            interaction.roles.forEach(role => {
+                rolePromises.push(
+                    interaction.channel.permissionOverwrites.create(role, {})
+                );
+            });
+        
+            // Waiting for all permissions to be set
+            Promise.all([...userPromises, ...rolePromises])
+                .then(async () => {
+                    // After all permissions are set, update the interaction
+                    await interaction.update(await makeAccessMessage(interaction.channel, true));
+                })
+                .catch(error => {
+                    // Handle errors if any
+                    console.error('Error occurred:', error);
+                });
+        }
+        if (interaction.customId === 'just-kick') {
+            interaction.users.forEach(user => {
+                const member = interaction.guild.members.cache.get(user.id);
+                if (member.voice && member.voice.channel && member.voice.channel.id == interaction.channel.id) {
+                    member.voice.disconnect();
+                }
+            })
+        }
     }
     if (interaction.type == 5) { // modal
         if (interaction.customId === 'edit') {
-            console.log(interaction.components)
             const oldName = interaction.channel.name;
             const oldLimit = interaction.channel.userLimit;
             let newName, newLimit;
@@ -382,8 +441,8 @@ discordClient.on('interactionCreate', async interaction => {
                 newLimit = interaction.components[1].components[0].value;
             }
 
-            interaction.channel.setName(newName);
-            interaction.channel.setUserLimit(newLimit);
+            await interaction.channel.setName(newName);
+            await interaction.channel.setUserLimit(newLimit);
 
             interaction.reply({
                 embeds: [{
@@ -393,45 +452,74 @@ discordClient.on('interactionCreate', async interaction => {
                     ], color: messages.colorSuccess
                 }], ephemeral: true
             });
+            let num
+            interaction.message.components[1].components.forEach(component => {
+                if (component.disabled) {
+                    if (component.data.custom_id == 'public') {
+                        num = 1
+                    }
+                    if (component.data.custom_id == 'private') {
+                        num = 2
+                    }
+                    if (component.data.custom_id == 'hide') {
+                        num = 3
+                    }
+                }
+            })
+            interaction.message.edit(await makeBaseMessage(interaction.message.embeds[0].color, interaction.user, interaction.channel, false, num));
         }
     }
 });
 
 
 async function getChannelAllowList(channel) {
-    // Fetch permission overwrites for the channel
-    const permissionOverwrites = await channel.permissionOverwrites.cache;
-    const list = []
-    permissionOverwrites.forEach(permissionOverwrite => {
-        if (permissionOverwrite.allow.toArray().includes('Connect')) {
-            if (permissionOverwrite.type === 0) {
-                list.push(`<@&${permissionOverwrite.id}>`)
+    return updateChannel(channel)
+    .then(channelPromise => {
+        const permissionOverwrites = channelPromise.permissionOverwrites.cache;
+        const list = [];
+        permissionOverwrites.forEach(permissionOverwrite => {
+            if (permissionOverwrite.allow.toArray().includes('Connect') && permissionOverwrite.allow.toArray().includes('ViewChannel')) {
+                if (permissionOverwrite.type === 0) {
+                    list.push(`<@&${permissionOverwrite.id}>`);
+                }
+                if (permissionOverwrite.type === 1) {
+                    list.push(`<@${permissionOverwrite.id}>`);
+                }
             }
-            if (permissionOverwrite.type === 1) {
-                list.push(`<@${permissionOverwrite.id}>`)
-            }
+        });
+        let text;
+        if (list.length === 0) {
+            text = messages.emptyList;
+        } else {
+            text = list.toString();
         }
+        return text;
     });
-    return list
 }
 
 async function getChannelDenyList(channel) {
-    // Fetch permission overwrites for the channel
-    const permissionOverwrites = await channel.permissionOverwrites.cache;
-    const list = []
-    permissionOverwrites.forEach(permissionOverwrite => {
-        console.log(permissionOverwrite)
-        console.log(permissionOverwrite.deny.toArray())
-        if (permissionOverwrite.deny.toArray().includes('Connect')) {
-            if (permissionOverwrite.type === 0) {
-                list.push(`<@&${permissionOverwrite.id}>`)
+    return updateChannel(channel)
+    .then(channelPromise => {
+        const permissionOverwrites = channelPromise.permissionOverwrites.cache;
+        const list = [];
+        permissionOverwrites.forEach(permissionOverwrite => {
+            if (permissionOverwrite.deny.toArray().includes('Connect') && permissionOverwrite.deny.toArray().includes('ViewChannel')) {
+                if (permissionOverwrite.type === 0) {
+                    list.push(`<@&${permissionOverwrite.id}>`);
+                }
+                if (permissionOverwrite.type === 1) {
+                    list.push(`<@${permissionOverwrite.id}>`);
+                }
             }
-            if (permissionOverwrite.type === 1) {
-                list.push(`<@${permissionOverwrite.id}>`)
-            }
+        });
+        let text;
+        if (list.length === 0) {
+            text = messages.emptyList;
+        } else {
+            text = list.toString();
         }
+        return text;
     });
-    return list
 }
 
 async function hideChannel(channel) {
@@ -452,10 +540,30 @@ async function showChannel(channel) {
     console.log('Showed channel ' + channel.name)
 }
 
-async function makeBaseMessage(color, user, channel) {
-    console.log(channel.rtcRegion)
+async function makeBaseMessage(color, user, channel, ping, btn) {
+    let content, pb, pr, hd;
+    if (ping) {
+        content = `<@${user.id}>`
+    } else {
+        content = ''
+    }
+    if (btn == 1) {
+        pb = true;
+        pr = false;
+        hd = false;
+    }
+    if (btn == 2) {
+        pb = false;
+        pr = true;
+        hd = false;
+    }
+    if (btn == 3) {
+        pb = false;
+        pr = false;
+        hd = true;
+    }
     return {
-        content: `<@${user.id}>`,
+        content: content,
         embeds: [
             {
                 color: color,
@@ -507,16 +615,14 @@ async function makeBaseMessage(color, user, channel) {
                         style: 2,
                         label: messages.btnAccess,
                         custom_id: 'access',
-                        emoji: messages.btnAccessEmoji,
-                        disabled : true
+                        emoji: messages.btnAccessEmoji
                     },
                     {
                         type: 2,
                         style: 2,
                         label: messages.btnKick,
                         custom_id: 'kick',
-                        emoji: messages.btnKickEmoji,
-                        disabled : true
+                        emoji: messages.btnKickEmoji
                     }
                 ]
             }, {
@@ -528,7 +634,7 @@ async function makeBaseMessage(color, user, channel) {
                         label: messages.btnPublic,
                         custom_id: 'public',
                         emoji: messages.btnPublicEmoji,
-                        disabled : true
+                        disabled : pb
                     },
                     {
                         type: 2,
@@ -536,7 +642,7 @@ async function makeBaseMessage(color, user, channel) {
                         label: messages.btnPrivate,
                         custom_id: 'private',
                         emoji: messages.btnPrivateEmoji,
-                        disabled : true
+                        disabled : pr
                     },
                     {
                         type: 2,
@@ -544,7 +650,7 @@ async function makeBaseMessage(color, user, channel) {
                         label: messages.btnHide,
                         custom_id: 'hide',
                         emoji: messages.btnHideEmoji,
-                        disabled : true
+                        disabled : hd
                     }
                 ]
             }, {
@@ -612,4 +718,83 @@ async function makeBaseMessage(color, user, channel) {
                 ],
             }]
     }
+}
+
+async function makeAccessMessage(channel, menu) {
+    let components
+    if (menu) {
+        components = [
+            {
+                type: 1,
+                components: [
+                    {
+                        type: 7,
+                        custom_id: 'access-add',
+                        min_values: 1,
+                        max_values: 25,
+                        placeholder: messages.btnAccessAdd,
+                    }
+                ]
+            }, {
+                type: 1,
+                components: [
+                    {
+                        type: 7,
+                        custom_id: 'access-ban',
+                        min_values: 1,
+                        max_values: 25,
+                        placeholder: messages.btnAccessBan,
+                    }
+                ]
+            }, {
+                type: 1,
+                components: [
+                    {
+                        type: 7,
+                        custom_id: 'access-reset',
+                        min_values: 1,
+                        max_values: 25,
+                        placeholder: messages.btnAccessReset,
+                    }
+                ]
+            }
+        ]
+    } else {
+        components = []
+    }
+    return {
+        embeds: [
+            {
+                title: messages.accessMessage,
+                color: 0x0099ff,
+                fields: [
+                    {
+                        name: messages.accessList,
+                        value: `${await getChannelAllowList(channel)}`,
+                    },
+                    {
+                        name: messages.denyList,
+                        value: `${await getChannelDenyList(channel)}`,
+                    }
+                ]
+
+            }
+        ],
+        components: components,
+        ephemeral: true,
+        fetchReply: true
+    }
+}
+async function checkOwner(interaction) {
+    ownerId = interaction.message.embeds[0].fields[0].value.replace('<@', '').replace('>', '')
+    if (ownerId !== interaction.user.id) {
+        await interaction.reply({ embeds: [{ color: messages.colorWarning, title: messages.errorNotOwner, description: messages.errorNotOwnerDescription.replace('{creatingChannel}', `<#${process.env.CHANNEL_ID}>`) }], ephemeral: true })
+        return false
+    } else {
+        return true
+    }
+}
+
+async function updateChannel(channel) {
+    return channel.guild.channels.fetch(channel.id)
 }
